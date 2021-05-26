@@ -102,20 +102,24 @@ func generate(sourceTypeName string, structType *types.Struct) error {
 func generateGet(f *jen.File, s *types.Struct, sourceTypeName string) {
 	query := generateGetQuery(s, sourceTypeName)
 	f.Func().Params(
-		jen.Id("p").Id(sourceTypeName+"DAO"),
+		jen.Id("c").Id(sourceTypeName+"DAO"),
 	).Id("Get").Params(
 		jen.Id("ctx").Qual("context", "Context"),
 		jen.Id("id").Int(),
 	).Call(
-		jen.Qual("model", sourceTypeName),
+		jen.Qual("github.com/mercadolibre/fury_payment-methods-write-v2/src/api/internal/model", sourceTypeName),
 		jen.Error(),
 	).Block(
-		jen.Var().Id("query").Op(":=").Lit(query),
-		jen.Var().Id("row").Qual("model", sourceTypeName),
+		jen.Var().Id("query").Op("=").Lit(query),
+		jen.Line(),
+		jen.Var().Id("row").Qual("github.com/mercadolibre/fury_payment-methods-write-v2/src/api/internal/model", sourceTypeName),
+		jen.Line(),
 		jen.Id("err").Op(":=").Qual("p", "db").Dot("Get").Call(jen.Op("&").Id("row"), jen.Id("query"), jen.Id("id")),
+		jen.Line(),
 		jen.If(jen.Id("err").Op("!=").Nil()).Block(
-			jen.Return(jen.Qual("model", sourceTypeName).Block(), jen.Id("err")),
+			jen.Return(jen.Qual("github.com/mercadolibre/fury_payment-methods-write-v2/src/api/internal/model", sourceTypeName).Block(), jen.Id("err")),
 		),
+		jen.Line(),
 		jen.Return(jen.Id("row"), jen.Nil()),
 	)
 }
