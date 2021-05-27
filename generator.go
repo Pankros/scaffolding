@@ -94,38 +94,204 @@ func generate(sourceTypeName string, structType *types.Struct) error {
 		toMapBlock...,
 	)
 
-	generateGet(f, structType, sourceTypeName)
+	daoName := sourceTypeName + "DAO"
+
+	modelPackage := "github.com/mercadolibre/fury_payment-methods-write-v2/src/api/internal/model"
+
+	generateDAO(f, daoName, modelPackage)
+	generateGet(f, structType, daoName, sourceTypeName, modelPackage)
+	generateList(f, structType, daoName, sourceTypeName, modelPackage)
+	generateCreate(f, structType, daoName, sourceTypeName, modelPackage)
+	generateUpdate(f, structType, daoName, sourceTypeName, modelPackage)
+	generateDelete(f, structType, daoName, sourceTypeName, modelPackage)
 	// 7. Write generated file
 	return f.Save(targetFilename)
 }
 
-func generateGet(f *jen.File, s *types.Struct, sourceTypeName string) {
-	query := generateGetQuery(s, sourceTypeName)
+func generateDAO(f *jen.File, daoName, modelPackage string) {
+	f.Type().Id(daoName).Struct(
+		jen.Id("db").Op("*").Qual("github.com/jmoiron/sqlx", "DB"),
+		jen.Id("audit").Qual(modelPackage, "AuditService"),
+	).Line()
+}
+
+func generateList(f *jen.File, s *types.Struct, daoName, sourceTypeName, modelPackage string) {
+	query := generateListQuery(s, sourceTypeName)
 	f.Func().Params(
-		jen.Id("c").Id(sourceTypeName+"DAO"),
-	).Id("Get").Params(
+		jen.Id("p").Id(daoName),
+	).Id("List").Params(
 		jen.Id("ctx").Qual("context", "Context"),
-		jen.Id("id").Int(),
 	).Call(
-		jen.Qual("github.com/mercadolibre/fury_payment-methods-write-v2/src/api/internal/model", sourceTypeName),
+		jen.Index().Qual(modelPackage, sourceTypeName),
 		jen.Error(),
 	).Block(
 		jen.Var().Id("query").Op("=").Lit(query),
 		jen.Line(),
-		jen.Var().Id("row").Qual("github.com/mercadolibre/fury_payment-methods-write-v2/src/api/internal/model", sourceTypeName),
+		jen.Var().Id("rows").Index().Qual(modelPackage, sourceTypeName),
 		jen.Line(),
-		jen.Id("err").Op(":=").Qual("p", "db").Dot("Get").Call(jen.Op("&").Id("row"), jen.Id("query"), jen.Id("id")),
+		jen.Id("err").Op(":=").Id("p").Dot("db").Dot("SelectContext").Call(
+			jen.Id("ctx"),
+			jen.Op("&").Id("rows"),
+			jen.Id("query")),
 		jen.Line(),
 		jen.If(jen.Id("err").Op("!=").Nil()).Block(
-			jen.Return(jen.Qual("github.com/mercadolibre/fury_payment-methods-write-v2/src/api/internal/model", sourceTypeName).Block(), jen.Id("err")),
+			jen.Return(jen.Index().Qual(modelPackage, sourceTypeName).Block(), jen.Id("err")),
+		),
+		jen.Line(),
+		jen.Return(jen.Id("rows"), jen.Nil()),
+	).Line()
+}
+
+func generateGet(f *jen.File, s *types.Struct, daoName, sourceTypeName, modelPackage string) {
+	query := generateGetQuery(s, sourceTypeName)
+	f.Func().Params(
+		jen.Id("p").Id(daoName),
+	).Id("Get").Params(
+		jen.Id("ctx").Qual("context", "Context"),
+		jen.Id("id").Int(),
+	).Call(
+		jen.Qual(modelPackage, sourceTypeName),
+		jen.Error(),
+	).Block(
+		jen.Var().Id("query").Op("=").Lit(query),
+		jen.Line(),
+		jen.Var().Id("row").Qual(modelPackage, sourceTypeName),
+		jen.Line(),
+		jen.Id("err").Op(":=").Id("p").Dot("db").Dot("Get").Call(
+			jen.Op("&").Id("row"),
+			jen.Id("query"),
+			jen.Id("id")),
+		jen.Line(),
+		jen.If(jen.Id("err").Op("!=").Nil()).Block(
+			jen.Return(jen.Qual(modelPackage, sourceTypeName).Block(), jen.Id("err")),
 		),
 		jen.Line(),
 		jen.Return(jen.Id("row"), jen.Nil()),
-	)
+	).Line()
+}
+
+func generateCreate(f *jen.File, s *types.Struct, daoName, sourceTypeName, modelPackage string) {
+	query := generateCreateQuery(s, sourceTypeName)
+	f.Func().Params(
+		jen.Id("p").Id(daoName),
+	).Id("Create").Params(
+		jen.Id("ctx").Qual("context", "Context"),
+		jen.Id("entity").Qual(modelPackage, sourceTypeName),
+	).Call(
+		jen.Int(),
+		jen.Error(),
+	).Block(
+		jen.Var().Id("query").Op("=").Lit(query),
+		jen.Line(),
+		jen.List(jen.Id("result"), jen.Id("err")).Op(":=").Id("p").Dot("db").Dot("NamedExecContext").Call(
+			jen.Id("ctx"),
+			jen.Id("query"),
+			jen.Op("&").Id("entity"),
+		),
+		jen.Line(),
+		jen.If(jen.Id("err").Op("!=").Nil()).Block(
+			jen.Return(jen.Lit(0), jen.Id("err")),
+		),
+		jen.Line(),
+		jen.List(jen.Id("id"), jen.Id("err")).Op(":=").Id("result").Dot("LastInsertId").Call(),
+		jen.Line(),
+		jen.If(jen.Id("err").Op("!=").Nil()).Block(
+			jen.Return(jen.Lit(0), jen.Id("err")),
+		),
+		jen.Line(),
+		jen.Return(jen.Id("id"), jen.Nil()),
+	).Line()
+}
+
+func generateUpdate(f *jen.File, s *types.Struct, daoName, sourceTypeName, modelPackage string) {
+	query := generateUpdateQuery(s, sourceTypeName)
+	f.Func().Params(
+		jen.Id("p").Id(daoName),
+	).Id("Update").Params(
+		jen.Id("ctx").Qual("context", "Context"),
+		jen.Id("entity").Qual(modelPackage, sourceTypeName),
+	).Error().Block(
+		jen.Var().Id("query").Op("=").Lit(query),
+		jen.Line(),
+		jen.List(jen.Id("_"), jen.Id("err")).Op(":=").Id("p").Dot("db").Dot("NamedExecContext").Call(
+			jen.Id("ctx"),
+			jen.Id("query"),
+			jen.Op("&").Id("entity"),
+		),
+		jen.Line(),
+		jen.If(jen.Id("err").Op("!=").Nil()).Block(
+			jen.Return(jen.Id("err")),
+		),
+		jen.Line(),
+		jen.Return(jen.Nil()),
+	).Line()
+}
+
+func generateDelete(f *jen.File, s *types.Struct, daoName, sourceTypeName, modelPackage string) {
+	query := generateDeleteQuery(s, sourceTypeName)
+	f.Func().Params(
+		jen.Id("p").Id(daoName),
+	).Id("Delete").Params(
+		jen.Id("ctx").Qual("context", "Context"),
+		jen.Id("id").Int(),
+	).Error().Block(
+		jen.Var().Id("query").Op("=").Lit(query),
+		jen.Line(),
+		jen.List(jen.Id("_"), jen.Id("err")).Op(":=").Id("p").Dot("db").Dot("NamedExecContext").Call(
+			jen.Id("ctx"),
+			jen.Id("query"),
+			jen.Map(jen.String()).Interface().Values(jen.Dict{jen.Lit("id") : jen.Id("id")}),
+		),
+		jen.Line(),
+		jen.If(jen.Id("err").Op("!=").Nil()).Block(
+			jen.Return(jen.Id("err")),
+		),
+		jen.Line(),
+		jen.Return(jen.Nil()),
+	).Line()
+}
+
+func generateDeleteQuery(s *types.Struct, sourceTypeName string) string {
+	return fmt.Sprintf("DELETE FROM %s WHERE id = :id", sourceTypeName)
+}
+
+func generateUpdateQuery(s *types.Struct, sourceTypeName string) string {
+	columns := getColumnNames(s)
+	columns = removeColumn(columns, "id")
+	columns = removeColumn(columns, "created_at")
+	columns = removeColumn(columns, "created_by")
+	for i, c := range columns {
+		columns[i] = fmt.Sprintf("%s = :%s", c, c)
+	}
+	return fmt.Sprintf("UPDATE %s SET (%s) WHERE id = :id", sourceTypeName, strings.Join(columns, ", "))
+}
+
+func generateCreateQuery(s *types.Struct, sourceTypeName string) string {
+	columns := getColumnNames(s)
+	columns = removeColumn(columns, "id")
+	return fmt.Sprintf("INSERT INTO %s (%s) VALUES (:%s)", sourceTypeName, strings.Join(columns, ", "), strings.Join(columns, ", :"))
+}
+
+func generateListQuery(s *types.Struct, sourceTypeName string) string {
+	return fmt.Sprintf("SELECT %s FROM %s", strings.Join(getColumnNames(s), ", "), sourceTypeName)
 }
 
 func generateGetQuery(s *types.Struct, sourceTypeName string) string {
 	return fmt.Sprintf("SELECT %s FROM %s WHERE id = ?", strings.Join(getColumnNames(s), ", "), sourceTypeName)
+}
+
+func removeColumn(ss []string, id string) []string {
+	for i, s := range ss {
+		if s == id {
+			return removeFromArray(ss, i)
+		}
+	}
+	return ss
+}
+
+func removeFromArray(s []string, i int) []string {
+	s[i] = s[len(s)-1]
+	return s[:len(s)-1]
 }
 
 func getColumnNames(s *types.Struct) []string {
