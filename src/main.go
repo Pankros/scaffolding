@@ -10,11 +10,12 @@ import (
 
 func main() {
 	// 1. Handle arguments to command
-	if len(os.Args) != 2 {
+	if len(os.Args) != 3 {
 		failErr(fmt.Errorf("expected exactly one argument: <source type>"))
 	}
 
 	sourceType := os.Args[1]
+	tableName := os.Args[2]
 	sourceTypePackage, sourceTypeName := splitSourceType(sourceType)
 
 	// 2. Inspect package and use type checker to infer imported types
@@ -37,7 +38,7 @@ func main() {
 		failErr(fmt.Errorf("type %v is not a struct", obj))
 	}
 
-	err := generate(sourceTypeName, structType)
+	err := generate(sourceTypeName, tableName, structType)
 	if err != nil {
 		failErr(err)
 	}
