@@ -124,6 +124,8 @@ github.com/mercadolibre/fury_go-platform v0.13.2/go.mod h1:pbB42RzDcRxu836vjmBGF
 github.com/mercadolibre/fury_go-seq-client v0.0.2/go.mod h1:m/nCYJhXeZL+uSui9I8NCaeXBzG3vtY9lUiEoH/4kgc=
 github.com/mercadolibre/fury_payment-methods-write-v2 v0.0.0-20210520221538-8a833be2b7ad h1:CXO84e4rqjQiJvhvAKWpmvQjSB9buPDs6dJTprMb+WI=
 github.com/mercadolibre/fury_payment-methods-write-v2 v0.0.0-20210520221538-8a833be2b7ad/go.mod h1:NkB5VoFXEAswFv6kVR1SQP++E9Rr9Tgh0DCy9hPQYag=
+github.com/mercadolibre/fury_payment-methods-write-v2 v0.0.0-20210602181037-6420e82bf0bd h1:QqMPqAoONAh6rTWRtXoZS+oX+BUImPiqKhINUtAaxVE=
+github.com/mercadolibre/fury_payment-methods-write-v2 v0.0.0-20210602181037-6420e82bf0bd/go.mod h1:NpZxMiVTkHmp3umDKFCdT67XYXIbE6sGEVx2LTwir04=
 github.com/mercadolibre/go-meli-toolkit v0.0.0-20200529163511-53388512232a/go.mod h1:iRnXRoLCFxF9ABZgLjhcGXa9EeHeVmkTZonTJWJnU10=
 github.com/mercadolibre/go-meli-toolkit v0.0.0-20201110145156-c3fc6612427d/go.mod h1:GF8dTEGseL3VAjwyOMsmm7+KagOwpMQ8NWgAW6pcU/M=
 github.com/mercadolibre/godocker v0.0.0-20160414184858-cf5942043664/go.mod h1:Xv0OhPNZTejXtCKF/w3P2gSHRBWLYmf+UajyksMGg44=
@@ -146,6 +148,7 @@ github.com/newrelic/go-agent/v3/integrations/nrmysql v1.2.0/go.mod h1:JNzxsD3gL+
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/prometheus/client_golang v0.9.1/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=

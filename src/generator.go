@@ -78,5 +78,15 @@ func generate(sourceTypeName, tableName string, structType *types.Struct) error 
 		return err
 	}
 
+	err = file.SaveFile("mapper", "mapper", fileName, generator.NewMapperGenerator(sourceTypeName, structType).GetMapperFile())
+	if err != nil {
+		return err
+	}
+
+	err = file.SaveFile("model", "model", fileName, generator.NewModelGenerator(sourceTypeName, structType).GetModelFile())
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

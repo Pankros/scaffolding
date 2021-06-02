@@ -48,12 +48,10 @@ func (g DaoGenerator) generateNewFunction() *Statement {
 	return Func().Id(
 		fmt.Sprintf("New%s", g.daoName),
 	).Params(
-		Id("db").Op("*").Qual(PackageSQLX, "DB"),
-		Id("audit").Qual(PackageModel, "AuditService"),
+		Id("audit").Id("AuditService"),
 	).Id(g.daoName).Block(
 		Return(
 			Id(g.daoName).Values(Dict{
-				Id("db"):    Id("db"),
 				Id("audit"): Id("audit"),
 			}),
 		),
@@ -62,8 +60,7 @@ func (g DaoGenerator) generateNewFunction() *Statement {
 
 func (g DaoGenerator) generateDAOType() *Statement {
 	return Type().Id(g.daoName).Struct(
-		Id("db").Op("*").Qual(PackageSQLX, "DB"),
-		Id("audit").Qual(PackageModel, "AuditService"),
+		Id("audit").Id("AuditService"),
 	)
 }
 
@@ -73,19 +70,18 @@ func (g DaoGenerator) generateListMethod() *Statement {
 		Id("p").Id(g.daoName),
 	).Id("List").Params(
 		Id("ctx").Qual("context", "Context"),
+		Id("tx").Id("DBConnection"),
 	).Call(
 		Index().Qual(PackageModel, g.sourceTypeName),
 		Error(),
 	).Block(
 		Var().Id("query").Op("=").Lit(query),
-		Line(),
 		Var().Id("rows").Index().Qual(PackageModel, g.sourceTypeName),
 		Line(),
-		Id("err").Op(":=").Id("p").Dot("db").Dot("SelectContext").Call(
+		Id("err").Op(":=").Id("tx").Dot("SelectContext").Call(
 			Id("ctx"),
 			Op("&").Id("rows"),
 			Id("query")),
-		Line(),
 		If(Id("err").Op("!=").Nil()).Block(
 			Return(Index().Qual(PackageModel, g.sourceTypeName).Block(), Id("err")),
 		),
@@ -100,20 +96,27 @@ func (g DaoGenerator) generateGetMethod() *Statement {
 		Id("p").Id(g.daoName),
 	).Id("Get").Params(
 		Id("ctx").Qual("context", "Context"),
+		Id("tx").Id("DBConnection"),
 		Id("id").Id("int64"),
 	).Call(
 		Qual(PackageModel, g.sourceTypeName),
 		Error(),
 	).Block(
 		Var().Id("query").Op("=").Lit(query),
-		Line(),
 		Var().Id("row").Qual(PackageModel, g.sourceTypeName),
 		Line(),
-		Id("err").Op(":=").Id("p").Dot("db").Dot("Get").Call(
-			Op("&").Id("row"),
+		List(Id("stmt"), Id("err")).Op(":=").Id("tx").Dot("PrepareContext").Call(
+			Id("ctx"),
 			Id("query"),
-			Id("id")),
+		),
 		Line(),
+		If(Id("err").Op("!=").Nil()).Block(
+			Return(Qual(PackageModel, g.sourceTypeName).Block(), Id("err")),
+		),
+		Line(),
+		Id("err").Op("=").Id("stmt").Dot("Get").Call(
+			Op("&").Id("row"),
+			Id("id")),
 		If(Id("err").Op("!=").Nil()).Block(
 			Return(Qual(PackageModel, g.sourceTypeName).Block(), Id("err")),
 		),
@@ -128,28 +131,27 @@ func (g DaoGenerator) generateCreateMethod() *Statement {
 		Id("p").Id(g.daoName),
 	).Id("Create").Params(
 		Id("ctx").Qual("context", "Context"),
+		Id("tx").Id("DBConnection"),
 		Id("entity").Qual(PackageModel, g.sourceTypeName),
 	).Call(
 		Id("int64"),
 		Error(),
 	).Block(
+		Id("entity").Dot("Audit").Op("=").Id("p").Dot("audit").Dot("GetAuditForCreate").Call(
+			Id("ctx"),
+		),
 		Var().Id("query").Op("=").Lit(query),
 		Line(),
-		List(Id("result"), Id("err")).Op(":=").Id("p").Dot("db").Dot("NamedExecContext").Call(
+		List(Id("result"), Id("err")).Op(":=").Id("tx").Dot("NamedExecContext").Call(
 			Id("ctx"),
 			Id("query"),
 			Op("&").Id("entity"),
 		),
-		Line(),
 		If(Id("err").Op("!=").Nil()).Block(
 			Return(Lit(0), Id("err")),
 		),
 		Line(),
-		List(Id("id"), Id("err")).Op(":=").Id("result").Dot("LastInsertId").Call(),
-		Line(),
-		If(Id("err").Op("!=").Nil()).Block(
-			Return(Lit(0), Id("err")),
-		),
+		List(Id("id"), Id("_")).Op(":=").Id("result").Dot("LastInsertId").Call(),
 		Line(),
 		Return(Id("id"), Nil()),
 	)
@@ -161,11 +163,19 @@ func (g DaoGenerator) generateUpdateMethod() *Statement {
 		Id("p").Id(g.daoName),
 	).Id("Update").Params(
 		Id("ctx").Qual("context", "Context"),
+		Id("tx").Id("DBConnection"),
 		Id("entity").Qual(PackageModel, g.sourceTypeName),
 	).Error().Block(
+		Id("entity").Dot("Audit").Op("=").Id("p").Dot("audit").Dot("GetAuditForUpdate").Call(
+			Id("ctx"),
+		),
 		Var().Id("query").Op("=").Lit(query),
 		Line(),
-		List(Id("_"), Id("err")).Op(":=").Id("p").Dot("db").Dot("NamedExecContext").Call(
+		If(Id("entity").Dot("ID").Op("==").Lit(0)).Block(
+			Return(Qual("errors", "New").Call(Lit("can't update an entity without ID"))),
+		),
+		Line(),
+		List(Id("_"), Id("err")).Op(":=").Id("tx").Dot("NamedExecContext").Call(
 			Id("ctx"),
 			Id("query"),
 			Op("&").Id("entity"),
@@ -185,16 +195,20 @@ func (g DaoGenerator) generateDeleteMethod() *Statement {
 		Id("p").Id(g.daoName),
 	).Id("Delete").Params(
 		Id("ctx").Qual("context", "Context"),
+		Id("tx").Id("DBConnection"),
 		Id("id").Id("int64"),
 	).Error().Block(
 		Var().Id("query").Op("=").Lit(query),
 		Line(),
-		List(Id("_"), Id("err")).Op(":=").Id("p").Dot("db").Dot("NamedExecContext").Call(
+		If(Id("id").Op("==").Lit(0)).Block(
+			Return(Qual("errors", "New").Call(Lit("can't delete an entity without ID"))),
+		),
+		Line(),
+		List(Id("_"), Id("err")).Op(":=").Id("tx").Dot("NamedExecContext").Call(
 			Id("ctx"),
 			Id("query"),
 			Map(String()).Interface().Values(Dict{Lit("id"): Id("id")}),
 		),
-		Line(),
 		If(Id("err").Op("!=").Nil()).Block(
 			Return(Id("err")),
 		),
@@ -249,10 +263,15 @@ func removeFromArray(s []string, i int) []string {
 func getColumnNames(s *types.Struct) []string {
 	var l []string
 	for i := 0; i < s.NumFields(); i++ {
-		tagValue := s.Tag(i)
-		a := strings.Split(tagValue, ":")[1]
-		a = strings.ReplaceAll(a, "\"", "")
-		l = append(l, a)
+		t := s.Field(i).Type()
+		if strings.Contains(t.String(), ".Audit") {
+			l = append(l, getColumnNames(t.Underlying().(*types.Struct))...)
+		} else {
+			tagValue := s.Tag(i)
+			a := strings.Split(tagValue, ":")[1]
+			a = strings.ReplaceAll(a, "\"", "")
+			l = append(l, a)
+		}
 	}
 	return l
 }

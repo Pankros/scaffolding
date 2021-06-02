@@ -43,7 +43,7 @@ func main() {
 		failErr(err)
 	}
 	// 6. Now we can iterate through fields and access tags
-	printStruct(structType)
+	//printStruct(structType)
 }
 
 func printStruct(structType *types.Struct) {
