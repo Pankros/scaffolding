@@ -7,6 +7,7 @@ const (
 	PackageUtils = "github.com/mercadolibre/fury_payment-methods-write-v2/src/api/internal/platform/utils"
 	PackageHttp  = "net/http"
 	PackageWeb   = "github.com/mercadolibre/fury_go-core/pkg/web"
+	PackageSQL = "database/sql"
 
 	ErrorUpdateNoId = "can't update %s type without ID"
 )

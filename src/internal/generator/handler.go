@@ -204,16 +204,14 @@ func (g HandlerGenerator) generateCreateMethod() *Statement {
 		If(Err().Op("!=").Nil()).Block(
 			Return(Qual(PackageWeb, "NewError").Call(
 				Qual(PackageHttp, "StatusInternalServerError"),
-				Qual(PackageHttp, "StatusText").Call(
-					Qual(PackageHttp, "StatusInternalServerError"),
-				),
+				Err().Dot("Error").Call(),
 			)),
 		),
 		Line(),
 		Return(Qual(PackageWeb, "RespondJSON").Call(
 			Id("w"),
 			Id("resp"),
-			Qual(PackageHttp, "StatusOK"))),
+			Qual(PackageHttp, "StatusCreated"))),
 	)
 }
 

@@ -1,4 +1,4 @@
-//go:generate go run github.com/Pankros/scaffolding/src github.com/Pankros/scaffolding/generate.PaymentMethods payment_methods
+//go:generate go run github.com/Pankros/scaffolding/src github.com/Pankros/scaffolding/generate.Organization organizations
 package generate
 
 import "time"
@@ -17,9 +17,17 @@ type PaymentMethodType struct {
 	Audit
 }
 
-type PaymentMethods struct {
+type PaymentMethod struct {
 	ID        int64     `db:"id"`
 	Name      string    `db:"name"`
 	Code      string    `db:"code"`
+	Audit
+}
+
+
+type Organization struct {
+	ID        int64     `db:"id"`
+	Name      string    `db:"name"`
+	SiteID    string    `db:"site_id"`
 	Audit
 }

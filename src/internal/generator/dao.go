@@ -118,6 +118,9 @@ func (g DaoGenerator) generateGetMethod() *Statement {
 			Op("&").Id("row"),
 			Id("id")),
 		If(Id("err").Op("!=").Nil()).Block(
+			If(Id("err").Op("==").Qual(PackageSQL, "ErrNoRows")).Block(
+				Return(Qual(PackageModel, g.sourceTypeName).Block(), Id("ErrNotFound")),
+			),
 			Return(Qual(PackageModel, g.sourceTypeName).Block(), Id("err")),
 		),
 		Line(),
@@ -229,7 +232,7 @@ func generateUpdateQuery(s *types.Struct, table string) string {
 	for i, c := range columns {
 		columns[i] = fmt.Sprintf("%s = :%s", c, c)
 	}
-	return fmt.Sprintf("UPDATE %s SET (%s) WHERE id = :id", table, strings.Join(columns, ", "))
+	return fmt.Sprintf("UPDATE %s SET %s WHERE id = :id", table, strings.Join(columns, ", "))
 }
 
 func generateCreateQuery(s *types.Struct, table string) string {
@@ -247,17 +250,13 @@ func generateGetQuery(s *types.Struct, table string) string {
 }
 
 func removeColumn(ss []string, id string) []string {
-	for i, s := range ss {
-		if s == id {
-			return removeFromArray(ss, i)
+	var resp []string
+	for _, s := range ss {
+		if s != id {
+			resp = append(resp, s)
 		}
 	}
-	return ss
-}
-
-func removeFromArray(s []string, i int) []string {
-	s[i] = s[len(s)-1]
-	return s[:len(s)-1]
+	return resp
 }
 
 func getColumnNames(s *types.Struct) []string {

@@ -46,17 +46,6 @@ func main() {
 	//printStruct(structType)
 }
 
-func printStruct(structType *types.Struct) {
-	for i := 0; i < structType.NumFields(); i++ {
-		field := structType.Field(i)
-		tagValue := structType.Tag(i)
-		if st, ok := field.Type().Underlying().(*types.Struct); ok {
-			printStruct(st)
-		}
-		fmt.Println(field.Name(), tagValue, field.Type(), field.IsField())
-	}
-}
-
 // github.com/mercadolibre/fury_payment-methods-write-v2/src/api/internal/model/entities.PaymentMethodType
 // github.com/Pankros/scaffolding/generate.TestStruct
 func loadPackage(path string) *packages.Package {

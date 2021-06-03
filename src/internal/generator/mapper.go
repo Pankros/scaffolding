@@ -99,10 +99,28 @@ func (g MapperGenerator) generateToEntity() Code {
 	).Id(
 		fmt.Sprintf("ToEntity"),
 	).Params(
-		Id("dto").Qual(PackageModel, g.dtoOutputName),
+		Id("id").Id("int64"),
+		Id("dto").Qual(PackageModel, g.dtoCreateName),
 	).Qual(PackageModel, g.sourceTypeName).Block(
-		Return(Qual(PackageModel, g.sourceTypeName).Values(g.buildMap(g.s, "dto"))),
+		Return(Qual(PackageModel, g.sourceTypeName).Values(g.buildMapForToEntity(g.s, "dto"))),
 	)
+}
+
+func (g MapperGenerator) buildMapForToEntity(s *types.Struct, source string) Dict {
+	d := map[Code]Code{}
+	for i := 0; i < s.NumFields(); i++ {
+		_, ok := s.Field(i).Type().Underlying().(*types.Struct)
+		if ok {
+			continue
+		}
+
+		if s.Field(i).Name() == "ID" {
+			d[Id(s.Field(i).Name())] = Id("id")
+		} else {
+			d[Id(s.Field(i).Name())] = Id(source).Dot(s.Field(i).Name())
+		}
+	}
+	return d
 }
 
 func (g MapperGenerator) buildMap(s *types.Struct, source string) Dict {
