@@ -62,7 +62,11 @@ func (g MapperGenerator) generateToListDTO() Code {
 	).Params(
 		Id("entities").Index().Qual(PackageModel, g.sourceTypeName),
 	).Index().Qual(PackageModel, g.dtoOutputName).Block(
-		Var().Id("dto").Index().Qual(PackageModel, g.dtoOutputName),
+		Id("dto").Op(":=").Make(
+			Index().Qual(PackageModel, g.dtoOutputName),
+			Lit(0),
+			Len(Id("entities")),
+			),
 		Line(),
 		For(List(Id("_"), Id("entity")).Op(":=").Range().Id("entities")).Block(
 			Id("dto").Op("=").Append(Id("dto"), Id("m").Dot("ToDTO").Call(Id("entity"))),

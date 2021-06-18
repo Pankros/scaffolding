@@ -187,6 +187,9 @@ func (g ServiceGenerator) generateGetMethod() *Statement {
 			Id("id"),
 		),
 		If(Id("err").Op("!=").Nil()).Block(
+			If(Id("err").Op("==").Qual(PackageDao, "ErrNotFound")).Block(
+				Return(List(Qual(PackageModel, g.dtoOutputName).Block(), Id("ErrNotFound"))),
+				),
 			Return(Qual(PackageModel, g.dtoOutputName).Values(), Id("err")),
 		),
 		Line(),
@@ -303,6 +306,9 @@ func (g ServiceGenerator) generateUpdateMethod() *Statement {
 			Id("entity"),
 		),
 		If(Id("err").Op("!=").Nil()).Block(
+			If(Id("err").Op("==").Qual(PackageDao, "ErrNotFound")).Block(
+				Return(List(Qual(PackageModel, g.dtoOutputName).Block(), Id("ErrNotFound"))),
+			),
 			Return(Qual(PackageModel, g.dtoOutputName).Values(), Id("err")),
 		),
 		Line(),

@@ -118,6 +118,10 @@ func (g HandlerGenerator) generateListMethod() *Statement {
 			Id("r").Dot("Context").Call(),
 		),
 		If(Err().Op("!=").Nil()).Block(
+			Qual(PackageLog, "Error").Call(
+				Id("r").Dot("Context").Call(),
+				Err().Dot("Error").Call(),
+			),
 			Return(Qual(PackageWeb, "NewError").Call(
 				Qual(PackageHttp, "StatusInternalServerError"),
 				Qual(PackageHttp, "StatusText").Call(
@@ -144,6 +148,10 @@ func (g HandlerGenerator) generateGetMethod() *Statement {
 	).Block(
 		List(Id("id"), Err()).Op(":=").Qual(PackageWeb, "Params").Call(Id("r")).Dot("Int").Call(Lit("id")),
 		If(Err().Op("!=").Nil()).Block(
+			Qual(PackageLog, "Error").Call(
+				Id("r").Dot("Context").Call(),
+				Err().Dot("Error").Call(),
+			),
 			Return(Qual(PackageWeb, "NewError").Call(
 				Qual(PackageHttp, "StatusBadRequest"),
 				Err().Dot("Error").Call(),
@@ -155,19 +163,23 @@ func (g HandlerGenerator) generateGetMethod() *Statement {
 			Id("int64").Call(Id("id")),
 		),
 		If(Err().Op("!=").Nil()).Block(
+			If(Err().Op("==").Qual(PackageService, "ErrNotFound")).Block(
+				Return(Qual(PackageWeb, "NewError").Call(
+					Qual(PackageHttp, "StatusNotFound"),
+					Qual(PackageHttp, "StatusText").Call(
+						Qual(PackageHttp, "StatusNotFound"),
+					),
+				)),
+			),
+			Line(),
+			Qual(PackageLog, "Error").Call(
+				Id("r").Dot("Context").Call(),
+				Err().Dot("Error").Call(),
+			),
 			Return(Qual(PackageWeb, "NewError").Call(
 				Qual(PackageHttp, "StatusInternalServerError"),
 				Qual(PackageHttp, "StatusText").Call(
 					Qual(PackageHttp, "StatusInternalServerError"),
-				),
-			)),
-		),
-		Line(),
-		If(Id("dto").Op("==").Call(Qual(PackageModel, g.dtoOutputName).Values())).Block(
-			Return(Qual(PackageWeb, "NewError").Call(
-				Qual(PackageHttp, "StatusNotFound"),
-				Qual(PackageHttp, "StatusText").Call(
-					Qual(PackageHttp, "StatusNotFound"),
 				),
 			)),
 		),
@@ -191,6 +203,10 @@ func (g HandlerGenerator) generateCreateMethod() *Statement {
 		Id("dto").Op(":=").Qual(PackageModel, g.dtoCreateName).Values(),
 		Err().Op(":=").Qual(PackageWeb, "Bind").Call(Id("r"), Op("&").Id("dto")),
 		If(Err().Op("!=").Nil()).Block(
+			Qual(PackageLog, "Error").Call(
+				Id("r").Dot("Context").Call(),
+				Err().Dot("Error").Call(),
+			),
 			Return(Qual(PackageWeb, "NewError").Call(
 				Qual(PackageHttp, "StatusBadRequest"),
 				Err().Dot("Error").Call(),
@@ -202,6 +218,10 @@ func (g HandlerGenerator) generateCreateMethod() *Statement {
 			Id("dto"),
 		),
 		If(Err().Op("!=").Nil()).Block(
+			Qual(PackageLog, "Error").Call(
+				Id("r").Dot("Context").Call(),
+				Err().Dot("Error").Call(),
+			),
 			Return(Qual(PackageWeb, "NewError").Call(
 				Qual(PackageHttp, "StatusInternalServerError"),
 				Err().Dot("Error").Call(),
@@ -227,6 +247,10 @@ func (g HandlerGenerator) generateUpdateMethod() *Statement {
 		Id("dto").Op(":=").Qual(PackageModel, g.dtoCreateName).Values(),
 		Err().Op(":=").Qual(PackageWeb, "Bind").Call(Id("r"), Op("&").Id("dto")),
 		If(Err().Op("!=").Nil()).Block(
+			Qual(PackageLog, "Error").Call(
+				Id("r").Dot("Context").Call(),
+				Err().Dot("Error").Call(),
+			),
 			Return(Qual(PackageWeb, "NewError").Call(
 				Qual(PackageHttp, "StatusBadRequest"),
 				Err().Dot("Error").Call(),
@@ -235,6 +259,10 @@ func (g HandlerGenerator) generateUpdateMethod() *Statement {
 		Line(),
 		List(Id("id"), Err()).Op(":=").Qual(PackageWeb, "Params").Call(Id("r")).Dot("Int").Call(Lit("id")),
 		If(Err().Op("!=").Nil()).Block(
+			Qual(PackageLog, "Error").Call(
+				Id("r").Dot("Context").Call(),
+				Err().Dot("Error").Call(),
+			),
 			Return(Qual(PackageWeb, "NewError").Call(
 				Qual(PackageHttp, "StatusBadRequest"),
 				Err().Dot("Error").Call(),
@@ -247,6 +275,19 @@ func (g HandlerGenerator) generateUpdateMethod() *Statement {
 			Id("dto"),
 		),
 		If(Err().Op("!=").Nil()).Block(
+			If(Err().Op("==").Qual(PackageService, "ErrNotFound")).Block(
+				Return(Qual(PackageWeb, "NewError").Call(
+					Qual(PackageHttp, "StatusNotFound"),
+					Qual(PackageHttp, "StatusText").Call(
+						Qual(PackageHttp, "StatusNotFound"),
+					),
+				)),
+			),
+			Line(),
+			Qual(PackageLog, "Error").Call(
+				Id("r").Dot("Context").Call(),
+				Err().Dot("Error").Call(),
+			),
 			Return(Qual(PackageWeb, "NewError").Call(
 				Qual(PackageHttp, "StatusInternalServerError"),
 				Qual(PackageHttp, "StatusText").Call(
@@ -273,6 +314,10 @@ func (g HandlerGenerator) generateDeleteMethod() *Statement {
 	).Block(
 		List(Id("id"), Err()).Op(":=").Qual(PackageWeb, "Params").Call(Id("r")).Dot("Int").Call(Lit("id")),
 		If(Err().Op("!=").Nil()).Block(
+			Qual(PackageLog, "Error").Call(
+				Id("r").Dot("Context").Call(),
+				Err().Dot("Error").Call(),
+			),
 			Return(Qual(PackageWeb, "NewError").Call(
 				Qual(PackageHttp, "StatusBadRequest"),
 				Err().Dot("Error").Call(),
@@ -284,6 +329,10 @@ func (g HandlerGenerator) generateDeleteMethod() *Statement {
 			Id("int64").Call(Id("id")),
 		),
 		If(Err().Op("!=").Nil()).Block(
+			Qual(PackageLog, "Error").Call(
+				Id("r").Dot("Context").Call(),
+				Err().Dot("Error").Call(),
+			),
 			Return(Qual(PackageWeb, "NewError").Call(
 				Qual(PackageHttp, "StatusInternalServerError"),
 				Qual(PackageHttp, "StatusText").Call(

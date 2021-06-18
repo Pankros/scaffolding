@@ -178,14 +178,16 @@ func (g DaoGenerator) generateUpdateMethod() *Statement {
 			Return(Qual("errors", "New").Call(Lit("can't update an entity without ID"))),
 		),
 		Line(),
-		List(Id("_"), Id("err")).Op(":=").Id("tx").Dot("NamedExecContext").Call(
+		List(Id("result"), Id("err")).Op(":=").Id("tx").Dot("NamedExecContext").Call(
 			Id("ctx"),
 			Id("query"),
 			Op("&").Id("entity"),
 		),
-		Line(),
 		If(Id("err").Op("!=").Nil()).Block(
 			Return(Id("err")),
+		),
+		If(List(Id("rows"), Id("_")).Op(":=").Id("result").Dot("RowsAffected").Call().Op(";").Id("rows").Op("==").Lit(0)).Block(
+			Return(Id("ErrNotFound")),
 		),
 		Line(),
 		Return(Nil()),
