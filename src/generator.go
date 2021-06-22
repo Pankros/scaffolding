@@ -50,7 +50,7 @@ func generate(sourceTypeName, tableName string, structType *types.Struct) error 
 		//	changeSetFields = append(changeSetFields, code)
 	}
 
-	fileName := utils.ToSnakeCase(sourceTypeName)
+	fileName := utils.ToFileName(sourceTypeName)
 
 	/*generateDAO(f, daoName, modelPackage)
 	generateNew(f, daoName, modelPackage)

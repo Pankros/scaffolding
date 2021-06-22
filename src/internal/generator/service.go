@@ -268,9 +268,10 @@ func (g ServiceGenerator) generateUpdateMethod() *Statement {
 		Err().Error(),
 	).Block(
 		If(Id("id").Op("==").Lit(0)).Block(
-			Return(Qual(PackageModel, g.dtoOutputName).Values(), Qual("errors", "New").Call(
-				Lit(fmt.Sprintf(ErrorUpdateNoId, g.sourceTypeName)),
-			)),
+			Return(
+				Qual(PackageModel, g.dtoOutputName).Values(),
+				Qual("errors", "New").Call(Lit(ErrorUpdateNoId)),
+			),
 		),
 		Line(),
 		List(Id("tx"), Err()).Op(":=").Id("s").Dot("txService").Dot("OpenTx").Call(

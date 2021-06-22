@@ -11,5 +11,5 @@ const (
 	PackageLog = "github.com/mercadolibre/fury_go-core/pkg/log"
 	PackageSQL = "database/sql"
 
-	ErrorUpdateNoId = "can't update %s type without ID"
+	ErrorUpdateNoId = "can't update entity without ID"
 )
